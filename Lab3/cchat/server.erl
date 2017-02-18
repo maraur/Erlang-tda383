@@ -30,6 +30,7 @@ handle(St, {connect, Name, Pid}) ->
 
 %% Used to remove user from server
 handle(St, {disconnect, Name, Pid}) ->
+  %something genserver:start() I guess?s
     case lists:member({Name, Pid}, St#server_st.users) of
       false ->
         {reply, {error, user_not_connected, "User not connected"}, St};
@@ -38,28 +39,27 @@ handle(St, {disconnect, Name, Pid}) ->
         {reply, ok, NewState}
     end;
 
-%% is this really good? channels needs to be more complex?
-%% How do I notify the clients following the channel with this?
-handle(St, {join, Channel, Name}) ->
+%% TODO Needs to be completely redone so that it spawns a channel
+handle(St, {join, Channel, Name, Pid}) ->
     case lists:member(Channel, St#server_st.channels) of
       true ->
         {reply, ok, St};
       false ->
-        NewState = St#server_st{channels = [Channel | St#server_st.channels]},
+        ChannelAtom = list_to_atom(St#server_st.name ++ Channel),
         {reply, ok, NewState}
     end;
+    genserver:request()
 
+% TODO need to be implemented, doesn't pass anything to channel
 handle(St, {msg_from_GUI, Chatroom, String}) ->
   io:fwrite("User trying to write: ~p~n", [{String, Chatroom}]),
   {reply, ok, St};
 
 
 %% TODO implement this one now that channel is a process
-handle(St, {leave, Channel}) ->
+handle(St, {leave, Name, Pid, Channel}) ->
+  io:fwrite("User trying to leave channel: ~p~n", [{Channel}]),
    {reply, {error, not_implemented, "Not implemented"}, St} ;
 
 handle(St, Request) ->
-    io:fwrite("Server received: ~p~n", [Request]),
-    Response = "hi!",
-    io:fwrite("Server is sending: ~p~n", [Response]),
-    {reply, Response, St}.
+    {reply, {error, invalid_request, "Server cannot handle request"}, St} .

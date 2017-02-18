@@ -20,7 +20,6 @@ initial_state(Nick, GUIName) ->
 
 %% Connect to server
 handle(St, {connect, Server}) ->
-    % Maybe it's better to get the atom of server right away?
     case St#client_st.server of
     undefined ->
       ServerAtom = list_to_atom(Server),
@@ -62,7 +61,7 @@ handle(St, {join, Channel}) ->
         true ->
             {reply,{error, user_already_joined, "Already a member of channel"}, St};
         false ->
-            genserver:request(St#client_st.server, {join, Channel}),
+            genserver:request(St#client_st.server, {join, Channel, St#client_st.nick, self()}),
             NewState = St#client_st{channels = [Channel | St#client_st.channels]},
             {reply, ok, NewState}
       end
@@ -78,7 +77,7 @@ handle(St, {leave, Channel}) ->
         false ->
             {reply, {error, user_not_joined, "Not a member of the channel"}, St};
         true ->
-              genserver:request(St#client_st.server, {leave, Channel}),
+              genserver:request(St#client_st.server, {leave, Channel, St#client_st.nick, self()}),
               NewState = St#client_st{channels = St#client_st.channels -- [Channel]},
               {reply, ok, NewState}
       end
@@ -93,8 +92,8 @@ handle(St, {msg_from_GUI, Channel, Msg}) ->
 handle(St, whoami) ->
     {reply, St#client_st.nick, St} ;
 
-%% Change nick
-%% Only accepts lower case for Nick otherwise it doesn't find the command
+%% Change nick of client
+%% command must be "/nick name", nick has to be lower case
 handle(St, {nick, Nick}) ->
     case St#client_st.server of
 	undefined ->
