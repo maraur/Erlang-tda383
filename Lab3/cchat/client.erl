@@ -24,7 +24,7 @@ handle(St, {connect, Server}) ->
     case St#client_st.server of
     undefined ->
       ServerAtom = list_to_atom(Server),
-      case genserver:request(ServerAtom, {connect, St#client_st.nick}) of
+      case genserver:request(ServerAtom, {connect, St#client_st.nick, self()}) of
       ok ->
 	         NewState = St#client_st{server = ServerAtom},
 	           {reply, ok, NewState} ;
@@ -43,7 +43,7 @@ handle(St, disconnect) ->
       _ ->
 	       case St#client_st.channels of
 	          [] ->
-	            genserver:request(St#client_st.server, {disconnect, St#client_st.nick}),
+	            genserver:request(St#client_st.server, {disconnect, St#client_st.nick, self()}),
 	            NewState = St#client_st{server = undefined},
 	            {reply, ok, NewState} ;
 	          _ ->
@@ -86,8 +86,8 @@ handle(St, {leave, Channel}) ->
 
 % Sending messages
 handle(St, {msg_from_GUI, Channel, Msg}) ->
-    % {reply, ok, St} ;
-    {reply, {error, not_implemented, "Not implemented"}, St} ;
+    genserver:request(St#client_st.server, {msg_from_GUI, Channel, Msg}),
+    {reply, ok, St};
 
 %% Get current nick
 handle(St, whoami) ->
