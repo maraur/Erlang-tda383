@@ -15,4 +15,3 @@
 % This record defines the structure of the channel process.
 % Keeps track of it's own name as well as the connected users.
 -record(channel_st, {name, users = []}).
-gitu

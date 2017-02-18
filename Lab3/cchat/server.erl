@@ -2,7 +2,7 @@
 -export([handle/2, initial_state/1]).
 -include_lib("./defs.hrl").
 
-%% inititial_state/2 and handle/2 are used togetger with the genserver module,
+%% initial_state/2 and handle/2 are used togetger with the genserver module,
 %% explained in the lecture about Generic server.
 
 % Produce initial state
@@ -18,7 +18,7 @@ initial_state(ServerName) ->
 %% {reply, Reply, NewState}, where Reply is the reply to be sent to the client
 %% and NewState is the new state of the server.
 
-handle(St, {connect, Name, Pid}) -> % Do we need to save Pid?
+handle(St, {connect, Name, Pid}) ->
     io:fwrite("User trying to connect: ~p~n", [{Name, Pid}]),
     case lists:keymember(Name, 1, St#server_st.users) of
     false ->
@@ -54,8 +54,7 @@ handle(St, {msg_from_GUI, Chatroom, String}) ->
   {reply, ok, St};
 
 
-%% Feels like I should need this one although I really don't as the channels
-%% doesn't know the clients
+%% TODO implement this one now that channel is a process
 handle(St, {leave, Channel}) ->
    {reply, {error, not_implemented, "Not implemented"}, St} ;
 
