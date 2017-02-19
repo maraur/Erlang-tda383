@@ -28,5 +28,9 @@ handle(St, {leave, Name, Pid}) ->
 
 % Handles sending messages to all members of a channel
 handle(St, {msg, Name, Pid, Msg}) ->
-    % No idea how to do this part
-    {reply, {error, not_implemented, "Not implemented"}, St}.
+    io:fwrite("User wrote to me: ~p~n", [{Name, Msg}]),
+    lists:foreach(fun(User) ->
+      genserver:request(element(2, User),
+      {incoming_msg, St#channel_st.name, element(1, User), Msg}) end
+      , St#channel_st.users),
+    {reply, ok, St}.

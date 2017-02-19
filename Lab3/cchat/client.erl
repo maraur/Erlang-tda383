@@ -86,7 +86,8 @@ handle(St, {leave, Channel}) ->
 
 % Sending messages
 handle(St, {msg_from_GUI, Channel, Msg}) ->
-    genserver:request(St#client_st.server, {msg_from_GUI, Channel, Msg}),
+    ChannelAtom = list_to_atom(Channel),
+    genserver:request(ChannelAtom, {msg, St#client_st.nick, self(), Msg},10000),
     {reply, ok, St};
 
 %% Get current nick
