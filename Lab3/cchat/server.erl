@@ -30,7 +30,6 @@ handle(St, {connect, Name, Pid}) ->
 
 %% Used to remove user from server
 handle(St, {disconnect, Name, Pid}) ->
-  %something genserver:start() I guess?s
     case lists:member({Name, Pid}, St#server_st.users) of
       false ->
         {reply, {error, user_not_connected, "User not connected"}, St};
@@ -41,14 +40,23 @@ handle(St, {disconnect, Name, Pid}) ->
 
 %% TODO Needs to be completely redone so that it spawns a channel
 handle(St, {join, Channel, Name, Pid}) ->
+    ChannelAtom = list_to_atom(Channel),
     case lists:member(Channel, St#server_st.channels) of
       true ->
+        io:fwrite("Channel already exists ~p~n", [Channel]),
+        genserver:request(ChannelAtom, {join, Name, Pid}),
         {reply, ok, St};
       false ->
-        ChannelAtom = list_to_atom(St#server_st.name ++ Channel),
+        io:fwrite("Spawning channel ~p~n", [Channel]),
+        % This probably won't allow the same channelname on different servers
+        State = channel:initial_state(Channel),
+        F = fun channel:handle/2,
+        genserver:start(ChannelAtom, State, F),
+        NewState = St#server_st{channels = [Channel | St#server_st.channels]},
+        genserver:request(ChannelAtom, {join, Name, Pid}),
         {reply, ok, NewState}
     end;
-    genserver:request()
+
 
 % TODO need to be implemented, doesn't pass anything to channel
 handle(St, {msg_from_GUI, Chatroom, String}) ->
@@ -57,6 +65,7 @@ handle(St, {msg_from_GUI, Chatroom, String}) ->
 
 
 %% TODO implement this one now that channel is a process
+% does this one really need to be here? couldn't it go directly to the channel?
 handle(St, {leave, Name, Pid, Channel}) ->
   io:fwrite("User trying to leave channel: ~p~n", [{Channel}]),
    {reply, {error, not_implemented, "Not implemented"}, St} ;

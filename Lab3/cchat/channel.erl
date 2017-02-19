@@ -13,6 +13,7 @@ initial_state(ChannelName) ->
 % that here
 handle(St, {join, Name, Pid}) ->
   NewState = St#channel_st{users = [{Name, Pid} | St#channel_st.users]},
+  io:fwrite("I'm alive!!! ~p~n", [St#channel_st.name]),
   {reply, ok, NewState};
 
 % Removes a user from a channel_st
