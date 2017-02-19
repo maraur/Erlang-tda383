@@ -77,7 +77,8 @@ handle(St, {leave, Channel}) ->
         false ->
             {reply, {error, user_not_joined, "Not a member of the channel"}, St};
         true ->
-              genserver:request(St#client_st.server, {leave, Channel, St#client_st.nick, self()}),
+              ChannelAtom = list_to_atom(Channel),
+              genserver:request(ChannelAtom, {leave, St#client_st.nick, self()}),
               NewState = St#client_st{channels = St#client_st.channels -- [Channel]},
               {reply, ok, NewState}
       end

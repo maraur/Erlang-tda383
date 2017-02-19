@@ -59,6 +59,7 @@ handle(St, {join, Channel, Name, Pid}) ->
 
 
 % TODO need to be implemented, doesn't pass anything to channel
+% does this one really need to be here? couldn't it go directly to the channel?
 handle(St, {msg_from_GUI, Chatroom, String}) ->
   io:fwrite("User trying to write: ~p~n", [{String, Chatroom}]),
   {reply, ok, St};

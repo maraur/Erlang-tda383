@@ -13,13 +13,17 @@ initial_state(ChannelName) ->
 % that here
 handle(St, {join, Name, Pid}) ->
   NewState = St#channel_st{users = [{Name, Pid} | St#channel_st.users]},
-  io:fwrite("I'm alive!!! ~p~n", [St#channel_st.name]),
+  io:fwrite("Currently connected users: ~p~n", [NewState#channel_st.users]),
   {reply, ok, NewState};
 
 % Removes a user from a channel_st
-% Server should handle checks
+% Server/client should handle checks
+% I don't think that this is unsafe anyway, worst case is that I try to remove
+% a user that doesn't exist
 handle(St, {leave, Name, Pid}) ->
+  io:fwrite("User trying to leave ~p~n", [Name]),
   NewState = St#channel_st{users = St#channel_st.users -- [{Name, Pid}]},
+  io:fwrite("Currently connected users: ~p~n", [NewState#channel_st.users]),
   {reply, ok, NewState};
 
 % Handles sending messages to all members of a channel
