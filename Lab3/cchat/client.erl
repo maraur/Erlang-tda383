@@ -20,18 +20,25 @@ initial_state(Nick, GUIName) ->
 
 %% Connect to server
 handle(St, {connect, Server}) ->
-    case St#client_st.server of
-    undefined ->
-      ServerAtom = list_to_atom(Server),
-      case genserver:request(ServerAtom, {connect, St#client_st.nick, self()}) of
-      ok ->
-	         NewState = St#client_st{server = ServerAtom},
-	           {reply, ok, NewState} ;
-      {error, name_taken} ->
-	         {reply, {error, connection_error, "Nick already taken"}, St}
-      end;
-    _ -> % is this robust enough?
-      {reply, {error, user_already_connected, "you are already connected to a server"}, St}
+  case St#client_st.server of
+  undefined ->
+    ServerAtom = list_to_atom(Server),
+    case whereis(ServerAtom) of
+        undefined ->
+          {reply, {error, server_not_reached, "Server could not be reached"}, St};
+        _ ->
+          case catch genserver:request(ServerAtom, {connect, St#client_st.nick, self()}) of
+            ok ->
+              NewState = St#client_st{server = ServerAtom},
+              {reply, ok, NewState} ;
+            {error, user_already_connected} ->
+              {reply, {error, nick_taken, "Nick already taken"}, St};
+            _ ->
+              {reply, {error, server_not_reached, "Server could not be reached"}, St}
+            end
+       end;
+  _ -> % is this robust enough?
+    {reply, {error, user_already_connected, "you are already connected to a server"}, St}
   end;
 
 %% Disconnect from server
@@ -86,9 +93,14 @@ handle(St, {leave, Channel}) ->
 
 % Sending messages
 handle(St, {msg_from_GUI, Channel, Msg}) ->
-    ChannelAtom = list_to_atom(Channel),
-    genserver:request(ChannelAtom, {msg, St#client_st.nick, self(), Msg},10000),
-    {reply, ok, St};
+  case lists:member(Channel,St#client_st.channels) of
+    true ->
+      ChannelAtom = list_to_atom(Channel),
+      genserver:request(ChannelAtom, {msg, St#client_st.nick, self(), Msg}),
+      {reply, ok, St};
+    false ->
+      {reply, {error, user_not_joined, "You are not connected to that channel"},St}
+    end;
 
 %% Get current nick
 handle(St, whoami) ->

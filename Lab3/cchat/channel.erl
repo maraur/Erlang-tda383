@@ -28,9 +28,10 @@ handle(St, {leave, Name, Pid}) ->
 
 % Handles sending messages to all members of a channel
 handle(St, {msg, Name, Pid, Msg}) ->
-    io:fwrite("User wrote to me: ~p~n", [{Name, Msg}]),
-    lists:foreach(fun(User) ->
-      genserver:request(element(2, User),
-      {incoming_msg, St#channel_st.name, element(1, User), Msg}) end
-      , St#channel_st.users),
-    {reply, ok, St}.
+  Users = St#channel_st.users -- [{Name, Pid}],
+  io:fwrite("Sending to users: ~p~n" ,[Users]),
+  lists:foreach(fun(R) ->
+    genserver:request(element(2,R), {incoming_msg, St#channel_st.name, Name, Msg}) end,
+    Users),
+  io:fwrite("Message sent to server: ~p~n" ,[#channel_st.name]),
+  {reply, ok, St}.
