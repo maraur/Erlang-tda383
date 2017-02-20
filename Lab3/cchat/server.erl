@@ -19,7 +19,6 @@ initial_state(ServerName) ->
 %% and NewState is the new state of the server.
 
 handle(St, {connect, Name, Pid}) ->
-    io:fwrite("User trying to connect: ~p~n", [{Name, Pid}]),
     case lists:keymember(Name, 1, St#server_st.users) of
       false ->
         NewState = St#server_st{users = [{Name, Pid} | St#server_st.users]},
@@ -42,20 +41,18 @@ handle(St, {disconnect, Name, Pid}) ->
 handle(St, {join, Channel, Name, Pid}) ->
     ChannelAtom = list_to_atom(Channel),
     case lists:member(Channel, St#server_st.channels) of
-      true ->
-        io:fwrite("Channel already exists ~p~n", [Channel]),
-        genserver:request(ChannelAtom, {join, Name, Pid}),
-        {reply, ok, St};
       false ->
-        io:fwrite("Spawning channel ~p~n", [Channel]),
         % This probably won't allow the same channelname on different servers
         State = channel:initial_state(Channel),
         F = fun channel:handle/2,
         genserver:start(ChannelAtom, State, F),
         NewState = St#server_st{channels = [Channel | St#server_st.channels]},
         genserver:request(ChannelAtom, {join, Name, Pid}),
-        {reply, ok, NewState}
+        {reply, ok, NewState};
+      true ->
+        genserver:request(ChannelAtom, {join, Name, Pid}),
+        {reply, ok, St}
     end;
 
 handle(St, Request) ->
-    {reply, {error, invalid_request, "Server cannot handle request"}, St} .
+    {reply, {error, invalid_request, "Server cannot handle request"}, St}.
