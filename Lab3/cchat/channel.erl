@@ -26,7 +26,10 @@ handle(St, {leave, Name, Pid}) ->
 % Handles sending messages to all members of a channel
 handle(St, {msg, Name, Pid, Msg}) ->
   Users = St#channel_st.users -- [{Name, Pid}],
+  %lists:foreach(fun(R) ->
+  %  genserver:request(element(2,R), {incoming_msg, St#channel_st.name, Name, Msg}) end,
+  %  Users),
   lists:foreach(fun(R) ->
-    genserver:request(element(2,R), {incoming_msg, St#channel_st.name, Name, Msg}) end,
-    Users),
+    spawn(genserver, request, [element(2,R), {incoming_msg,
+      St#channel_st.name, Name, Msg}]) end, Users),
   {reply, ok, St}.
