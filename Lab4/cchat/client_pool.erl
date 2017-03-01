@@ -8,9 +8,9 @@
 
 % Produce initial state
 start_pool(Clients, F, Tasks, Server) ->
-    #pool_st{idle = Clients, tasks = Tasks, server = Server},
+    St = #pool_st{idle = Clients, tasks = Tasks, server = Server},
     %%client_tasks = assign_tasks(St#pool_st.idles, tasks), <- skip this if we don't absolutely need it
-    loop(). %% TODO fix this shit
+    loop(St, F, 0). %% TODO fix this shit
 
 %% ---------------------------------------------------------------------------
 
@@ -31,32 +31,37 @@ start_pool(Clients, F, Tasks, Server) ->
 
 %%remove_client()
 
-loop() ->
-  io:fwrite("yay ~n").
+%loop() ->
+%  io:fwrite("yay ~n").
 
-%loop(St, F, Ref) ->
-   %case {St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy} of
-	 %   {[], _, []} ->
+loop(St, F, Ref) ->
+
+   case {St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy} of
+	   {[], _, []} ->
+       io:fwrite("yay1 ~p~n", [{St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy}]);
 		%% use keysort to get elements right order
 		%% make list as result
 		%% send result to server
-	 %  {[], _, _} ->
+	   {[], _, _} ->
 		%% receive something
 		%% client now idle
 		%% append to result
 		%% loop(stuff)
+      io:fwrite("yay2 ~p~n", [{St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy}]);
 		%  loop(NewState, F, Ref);
-	  % {_, [], _} ->
+	   {_, [], _} ->
 		%% receive something
 		%% client now idle
 		%% append to result
 		%  loop(NewState, F, Ref);
-	  % _ ->
+      io:fwrite("yay3 ~p~n", [{St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy}]);
+	   _ ->
 		%% work_to_client(),
 		%% client now busy
 		%% loop(stuff)
 		%  loop(NewState, F, (Ref + 1))
-   %end.
+    io:fwrite("yay4 ~p~n", [{St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy}])
+   end.
 
 
 %% Function for assigning tasks to users

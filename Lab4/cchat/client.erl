@@ -37,7 +37,7 @@ handle(St, {connect, Server}) ->
               {reply, {error, server_not_reached, "Server could not be reached"}, St}
             end
        end;
-  _ -> 
+  _ ->
     {reply, {error, user_already_connected, "you are already connected to a server"}, St}
   end;
 
@@ -65,7 +65,7 @@ handle(St, {join, Channel}) ->
   case St#client_st.server of
     undefined ->
         {reply, {error, user_not_connected, "Not connected to server"}, St};
-    _ -> 
+    _ ->
       case lists:member(Channel, St#client_st.channels) of
         true ->
             {reply,{error, user_already_joined, "Already a member of channel"}, St};
@@ -77,13 +77,13 @@ handle(St, {join, Channel}) ->
     end;
 
 %% Leave channel
-%% Ignores the server as the server does not keep a record of which users are connected to what 
+%% Ignores the server as the server does not keep a record of which users are connected to what
 %% channel.
 handle(St, {leave, Channel}) ->
   case St#client_st.server of
     undefined ->
         {reply, {error, user_not_connected, "Not connected to server"}, St};
-    _ -> 
+    _ ->
       case lists:member(Channel, St#client_st.channels) of
         false ->
             {reply, {error, user_not_joined, "Not a member of the channel"}, St};
@@ -96,7 +96,7 @@ handle(St, {leave, Channel}) ->
     end;
 
 %% Sending messages
-%% Sends the message directly to the channels, skipping the server. 
+%% Sends the message directly to the channels, skipping the server.
 handle(St, {msg_from_GUI, Channel, Msg}) ->
   case lists:member(Channel,St#client_st.channels) of
     true ->
@@ -117,12 +117,13 @@ handle(St, {nick, Nick}) ->
 	undefined ->
 	    NewState = St#client_st{nick = Nick},
 	    {reply, ok, NewState} ;
-	_ -> 
+	_ ->
 	     {reply, {error, user_already_connected, "You are connected to a server"}, St}
     end;
 
 %% Completes job given by server
 handle(St, {handle_job, F, Args}) ->
+   io:fwrite("Client got it! ~n"),
    {reply, {error, function_not_implemented, "Function is not implemented"}, St};
 
 %% Incoming message
