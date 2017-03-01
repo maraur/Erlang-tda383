@@ -2,7 +2,7 @@
 -export([handle/2, initial_state/1]).
 -include_lib("./defs.hrl").
 
-%% initial_state/2 and handle/2 are used togetger with the genserver module,
+%% initial_state/2 and handle/2 are used together with the genserver module,
 %% explained in the lecture about Generic server.
 
 % Produce initial state
@@ -42,7 +42,6 @@ handle(St, {join, Channel, Name, Pid}) ->
     ChannelAtom = list_to_atom(Channel),
     case lists:member(Channel, St#server_st.channels) of
       false ->
-        % This probably won't allow the same channelname on different servers
         State = channel:initial_state(Channel),
         F = fun channel:handle/2,
         genserver:start(ChannelAtom, State, F),
@@ -54,5 +53,6 @@ handle(St, {join, Channel, Name, Pid}) ->
         {reply, ok, St}
     end;
 
+%% This code should not be reached, if it does then an invalid request name has been sent.
 handle(St, Request) ->
     {reply, {error, invalid_request, "Server cannot handle request"}, St}.

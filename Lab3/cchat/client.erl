@@ -18,7 +18,7 @@ initial_state(Nick, GUIName) ->
 %% {reply, Reply, NewState}, where Reply is the reply to be sent to the
 %% requesting process and NewState is the new state of the client.
 
-%% Connect to server
+%% Connect to server if not already connected and the server exists
 handle(St, {connect, Server}) ->
   case St#client_st.server of
   undefined ->
@@ -37,11 +37,11 @@ handle(St, {connect, Server}) ->
               {reply, {error, server_not_reached, "Server could not be reached"}, St}
             end
        end;
-  _ -> % is this robust enough?
+  _ -> 
     {reply, {error, user_already_connected, "you are already connected to a server"}, St}
   end;
 
-%% Disconnect from server
+%% Disconnect from server if the user is connected to the server
 handle(St, disconnect) ->
     case St#client_st.server of
       undefined ->
@@ -58,12 +58,14 @@ handle(St, disconnect) ->
     end;
 
 
-% Join channel
+%% Join channel
+%% Uses the server to join the channel, this is the only time that the client asks the server
+%% about something related to the channels
 handle(St, {join, Channel}) ->
   case St#client_st.server of
     undefined ->
         {reply, {error, user_not_connected, "Not connected to server"}, St};
-    _ -> % is this robust enough?
+    _ -> 
       case lists:member(Channel, St#client_st.channels) of
         true ->
             {reply,{error, user_already_joined, "Already a member of channel"}, St};
@@ -75,11 +77,13 @@ handle(St, {join, Channel}) ->
     end;
 
 %% Leave channel
+%% Ignores the server as the server does not keep a record of which users are connected to what 
+%% channel.
 handle(St, {leave, Channel}) ->
   case St#client_st.server of
     undefined ->
         {reply, {error, user_not_connected, "Not connected to server"}, St};
-    _ -> % is this robust enough?
+    _ -> 
       case lists:member(Channel, St#client_st.channels) of
         false ->
             {reply, {error, user_not_joined, "Not a member of the channel"}, St};
@@ -91,7 +95,8 @@ handle(St, {leave, Channel}) ->
       end
     end;
 
-% Sending messages
+%% Sending messages
+%% Sends the message directly to the channels, skipping the server. 
 handle(St, {msg_from_GUI, Channel, Msg}) ->
   case lists:member(Channel,St#client_st.channels) of
     true ->
@@ -107,13 +112,12 @@ handle(St, whoami) ->
     {reply, St#client_st.nick, St} ;
 
 %% Change nick of client
-%% command must be "/nick name", nick has to be lower case
 handle(St, {nick, Nick}) ->
     case St#client_st.server of
 	undefined ->
 	    NewState = St#client_st{nick = Nick},
 	    {reply, ok, NewState} ;
-	_ -> % is this robust enough?
+	_ -> 
 	     {reply, {error, user_already_connected, "You are connected to a server"}, St}
     end;
 
