@@ -9,7 +9,6 @@
 % Produce initial state
 start_pool(Clients, F, Tasks, Server) ->
     St = #pool_st{idle = Clients, tasks = Tasks, server = Server},
-    %%client_tasks = assign_tasks(St#pool_st.idles, tasks), <- skip this if we don't absolutely need it
     loop(St, F, 0, []). %% TODO fix this shit
 
 %% ---------------------------------------------------------------------------
@@ -61,17 +60,13 @@ io:fwrite("Client managed to return something: ~p ~n", [{Pid, TaskRef, Val}]), %
             end;
 		%% client now idle
 		%% append to result
-%        User = lists:keyfind(element(1, Response), 2, St#pool_st.busy),
-%        Result = Result ++ [element(2, Response)],
-%        NewState = St#pool_st{idle = St#pool_st.idle ++ [User], busy = St#pool_st.busy -- [User]},
-%io:fwrite("yay3 ~p~n", [{St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy}]), %% TODO remove
-%		    loop(NewState, F, Ref, Result);
 	   _ ->
 		%% work_to_client(),
 		%% client now busy
         User = hd(St#pool_st.idle),
         Task = hd(St#pool_st.tasks),
-        spawn(genserver, request, [element(2,User), {handle_job, F, Task, self(), Ref}]),
+io:fwrite("trying to spawn server for ~p~n", [{User}]),
+        spawn(genserver, request, [element(2, User), {handle_job, F, Task, self(), Ref}]),
         NewState = St#pool_st{idle = St#pool_st.idle -- [User], busy = St#pool_st.busy ++ [User],
                               tasks = St#pool_st.tasks -- [Task]},
 io:fwrite("yay4 ~p~n", [{St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy}]), %% TODO remove

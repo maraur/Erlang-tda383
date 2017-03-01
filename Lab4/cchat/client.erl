@@ -116,7 +116,7 @@ handle(St, {nick, Nick}) ->
     case St#client_st.server of
 	undefined ->
 	    NewState = St#client_st{nick = Nick},
-	    {reply, ok, NewState} ;
+	    {reply, ok, NewState};
 	_ ->
 	     {reply, {error, user_already_connected, "You are connected to a server"}, St}
     end;
@@ -124,9 +124,9 @@ handle(St, {nick, Nick}) ->
 %% Completes job given by server and returns it
 handle(St, {handle_job, F, Args, Pid, Ref}) ->
    Val = F(Args),
-   io:fwrite("Client got it and calculated! ~p ~n" , [{Val}]),
+   io:fwrite("Client got it and calculated! ~p ~n" , [{St#client_st.nick, Val}]),
    Pid ! {self(), Ref, Val},
-   {reply, {error, function_not_implemented, "Function is not implemented"}, St};
+   {reply, ok, St};
 
 %% Incoming message
 handle(St = #client_st { gui = GUIName }, {incoming_msg, Channel, Name, Msg}) ->
