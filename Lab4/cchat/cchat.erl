@@ -23,5 +23,7 @@ start2() ->
     client(),
     client().
 
-send_job(Server, F, Args ) ->
+send_job(Server, F, Args) ->
+    cchat:server(), %% TODO REMOVE!!!! only for testing
+    io:fwrite("cchat got it ~n"), %% TODO REMOVE!!!! only for testing
     genserver:request(list_to_atom(Server), {send_job, F, Args}, 10000).

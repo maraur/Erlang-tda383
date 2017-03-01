@@ -55,7 +55,8 @@ handle(St, {join, Channel, Name, Pid}) ->
 
 %% Handles sending jobs to the clients
 handle(St, {send_job, F, Args}) ->
-    spawn(client_pool, start_pool, {St#server_st.users, F, Args, self()}),
+    io:fwrite("server got it ~n"), %% TODO REMOVE!!!! only for testing
+    spawn(client_pool, start_pool, [St#server_st.users, F, Args, self()]),
     {reply, ok, St};
 
 %% This code should not be reached, if it does then an invalid request name has been sent.

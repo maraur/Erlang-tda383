@@ -18,4 +18,4 @@
 
 %% This record defines the structure of the client_pool process.
 %% Keeps track of the existing clients and the tasks to be done.
--record(pool_st, {idle = [], busy = [], tasks = [], server}).
+-record(pool_st, {idle = [], busy = [], tasks, server}).
