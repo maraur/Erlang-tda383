@@ -121,9 +121,11 @@ handle(St, {nick, Nick}) ->
 	     {reply, {error, user_already_connected, "You are connected to a server"}, St}
     end;
 
-%% Completes job given by server
-handle(St, {handle_job, F, Args}) ->
-   io:fwrite("Client got it! ~n"),
+%% Completes job given by server and returns it
+handle(St, {handle_job, F, Args, Pid, Ref}) ->
+   Val = F(Args),
+   io:fwrite("Client got it and calculated! ~p ~n" , [{Val}]),
+   Pid ! {self(), Ref, Val},
    {reply, {error, function_not_implemented, "Function is not implemented"}, St};
 
 %% Incoming message

@@ -53,7 +53,7 @@ handle(St, {join, Channel, Name, Pid}) ->
         {reply, ok, St}
     end;
 
-%% Handles sending jobs to the clients
+%% Handles sending jobs to the clients by spawning a client_pool
 handle(St, {send_job, F, Args}) ->
     io:fwrite("server got it ~n"), %% TODO REMOVE!!!! only for testing
     spawn(client_pool, start_pool, [St#server_st.users, F, Args, self()]),

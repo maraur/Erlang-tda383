@@ -24,7 +24,7 @@ handle(St, {leave, Name, Pid}) ->
 handle(St, {msg, Name, Pid, Msg}) ->
   Users = St#channel_st.users -- [{Name, Pid}],
   lists:foreach(fun(R) ->
-	msg_to_user(element(2,R), St#channel_st.name, Name, Msg) end, Users),
+	   msg_to_user(element(2,R), St#channel_st.name, Name, Msg) end, Users),
   {reply, ok, St}.
 
 %% Spawns a process for a message to introduce concurrency

@@ -10,35 +10,24 @@
 start_pool(Clients, F, Tasks, Server) ->
     St = #pool_st{idle = Clients, tasks = Tasks, server = Server},
     %%client_tasks = assign_tasks(St#pool_st.idles, tasks), <- skip this if we don't absolutely need it
-    loop(St, F, 0). %% TODO fix this shit
+    loop(St, F, 0, []). %% TODO fix this shit
 
 %% ---------------------------------------------------------------------------
 
-%% Not needed/used?
-%handle_work(something) ->
-%	assign_tasks(something),
-%	send_tasks(something),
-%	recieve_tasks(something).
-
-
-%% Maybe this is bad, should fix
-%send_tasks ([], Id) = Id;
-%send_tasks ([H|T], Id) = genserver:request(something), send_tasks(T, (Id + 1)).
-
-
 %%add_client()
-
 
 %%remove_client()
 
 %loop() ->
 %  io:fwrite("yay ~n").
 
-loop(St, F, Ref) ->
-
+loop(St, F, Ref, Result) ->
    case {St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy} of
 	   {[], _, []} ->
-       io:fwrite("yay1 ~p~n", [{St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy}]);
+       SortedResult = lists:keysort(1, Result),
+       FinalResult = [element(2,X) || X <- SortedResult],
+io:fwrite("Final result ended up being: ~p~n", [{FinalResult}]); %% TODO remove
+
 		%% use keysort to get elements right order
 		%% make list as result
 		%% send result to server
@@ -46,21 +35,47 @@ loop(St, F, Ref) ->
 		%% receive something
 		%% client now idle
 		%% append to result
-		%% loop(stuff)
-      io:fwrite("yay2 ~p~n", [{St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy}]);
+io:fwrite("Waiting to receive ~n"),
+       receive
+         {Pid, TaskRef, Val} ->
+io:fwrite("Client managed to return something: ~p ~n", [{Pid, TaskRef, Val}]), %%TODO remove
+             User = lists:keyfind(Pid, 2, St#pool_st.busy),
+             NewResult = [{TaskRef, Val} | Result],
+             NewState = St#pool_st{idle = St#pool_st.idle ++ [User], busy = St#pool_st.busy -- [User]},
+             loop(NewState, F, Ref, NewResult);
+         _ ->
+             io:fwrite("Client returned something wrong ~n")
+           end;
 		%  loop(NewState, F, Ref);
 	   {_, [], _} ->
-		%% receive something
+io:fwrite("Waiting to receive ~n"),
+        receive
+          {Pid, TaskRef, Val} ->
+io:fwrite("Client managed to return something: ~p ~n", [{Pid, TaskRef, Val}]), %%TODO remove
+              User = lists:keyfind(Pid, 2, St#pool_st.busy),
+              NewResult = [{TaskRef, Val} | Result],
+              NewState = St#pool_st{idle = St#pool_st.idle ++ [User], busy = St#pool_st.busy -- [User]},
+              loop(NewState, F, Ref, NewResult);
+          _ ->
+              io:fwrite("Client returned something wrong ~n")
+            end;
 		%% client now idle
 		%% append to result
-		%  loop(NewState, F, Ref);
-      io:fwrite("yay3 ~p~n", [{St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy}]);
+%        User = lists:keyfind(element(1, Response), 2, St#pool_st.busy),
+%        Result = Result ++ [element(2, Response)],
+%        NewState = St#pool_st{idle = St#pool_st.idle ++ [User], busy = St#pool_st.busy -- [User]},
+%io:fwrite("yay3 ~p~n", [{St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy}]), %% TODO remove
+%		    loop(NewState, F, Ref, Result);
 	   _ ->
 		%% work_to_client(),
 		%% client now busy
-		%% loop(stuff)
-		%  loop(NewState, F, (Ref + 1))
-    io:fwrite("yay4 ~p~n", [{St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy}])
+        User = hd(St#pool_st.idle),
+        Task = hd(St#pool_st.tasks),
+        spawn(genserver, request, [element(2,User), {handle_job, F, Task, self(), Ref}]),
+        NewState = St#pool_st{idle = St#pool_st.idle -- [User], busy = St#pool_st.busy ++ [User],
+                              tasks = St#pool_st.tasks -- [Task]},
+io:fwrite("yay4 ~p~n", [{St#pool_st.tasks, St#pool_st.idle, St#pool_st.busy}]), %% TODO remove
+		    loop(NewState, F, (Ref + 1), Result)
    end.
 
 
