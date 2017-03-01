@@ -54,9 +54,14 @@ handle(St, {join, Channel, Name, Pid}) ->
     end;
 
 %% Handles sending jobs to the clients by spawning a client_pool
-handle(St, {send_job, F, Args}) ->
+handle(St, {send_job, F, Args, Pid}) ->
     io:fwrite("server got it ~n"), %% TODO REMOVE!!!! only for testing
-    spawn(client_pool, start_pool, [St#server_st.users, F, Args, self()]),
+    spawn(client_pool, start_pool, [St#server_st.users, F, Args, self(), Pid]),
+    {reply, ok, St}; %% This is what's wrong... It shouldn't return this!
+
+handle(St, {return_result, Result, From}) ->
+    From ! {results, Result},
+    io:fwrite("Trying to send message to: ~p~n", [{From, Result}]),
     {reply, ok, St};
 
 %% This code should not be reached, if it does then an invalid request name has been sent.
